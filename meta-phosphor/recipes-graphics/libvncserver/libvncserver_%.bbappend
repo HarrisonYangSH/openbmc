@@ -1,1 +1,1 @@
-PACKAGECONFIG = "jpeg lzo systemd zlib openssl pthread"
+PACKAGECONFIG = "24bpp jpeg lzo systemd zlib openssl pthread"

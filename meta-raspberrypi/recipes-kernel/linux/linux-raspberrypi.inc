@@ -20,6 +20,7 @@ SRC_URI += " \
 
 SRC_URI:append:raspberrypi4 = " \
     file://rpi4-nvmem.cfg \
+    file://tc358743.cfg \
 "
 
 KCONFIG_MODE = "--alldefconfig"
