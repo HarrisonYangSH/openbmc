@@ -1,0 +1,5 @@
+if [ ! -d meta-raspberrypi/conf/templates ]; then
+    cp -r meta-evb/meta-evb-raspberrypi/conf/templates meta-raspberrypi/conf/templates
+fi
+
+TEMPLATECONF=meta-raspberrypi/conf/templates/default . openbmc-env

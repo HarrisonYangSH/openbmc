@@ -1,4 +1,4 @@
-MACHINE ??= "raspberrypi"
+MACHINE ??= "raspberrypi4-64"
 DISTRO ?= "openbmc-phosphor"
 PACKAGE_CLASSES ?= "package_ipk"
 SANITY_TESTED_DISTROS:append ?= " *"
@@ -21,3 +21,10 @@ CONF_VERSION = "2"
 
 require conf/machine/include/obmc-bsp-common.inc
 require conf/machine/include/obmc-evb-common.inc
+
+IMAGE_FSTYPES = "rpi-sdimg"
+LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"
+FLASH_SIZE = "131072"
+FLASH_ROFS_OFFSET:flash-131072 ?= "20480"
+
+INHERIT += "rm_work"
