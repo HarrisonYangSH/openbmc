@@ -25,6 +25,16 @@ require conf/machine/include/obmc-evb-common.inc
 IMAGE_FSTYPES = "rpi-sdimg"
 LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"
 FLASH_SIZE = "131072"
-FLASH_ROFS_OFFSET:flash-131072 ?= "20480"
+FLASH_ROFS_OFFSET:flash-131072 = "20480"
 
 INHERIT += "rm_work"
+
+CMDLINE_CMA = "cma=128M"
+VIDEO_CAMERA = "1"
+HDMI_FORCE_HOTPLUG = "1"
+ENABLE_UART = "1"
+GPU_MEM = "128"
+ENABLE_DWC2_PERIPHERAL = "1"
+RPI_EXTRA_CONFIG = "dtoverlay=disable-bt"
+
+EXTRA_IMAGE_FEATURES:append = " bash-completion-pkgs "
