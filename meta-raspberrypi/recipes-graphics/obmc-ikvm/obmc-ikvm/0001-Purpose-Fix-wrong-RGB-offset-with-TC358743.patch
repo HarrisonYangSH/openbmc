@@ -1,0 +1,80 @@
+From e1f85f3f58c6463ae200796c7b46ac63665d42f5 Mon Sep 17 00:00:00 2001
+From: Harrison Yang <harrison.yang@siliconmotion.com>
+Date: Thu, 31 Jul 2025 19:46:02 +0800
+Subject: [PATCH] Purpose: Fix wrong RGB offset with TC358743.
+
+Cause: Obmc-iKVM assumes that the source surface is 32bpp.
+Upstream-Status: Submitted
+
+Reviewed-by: None
+Signed-off-by: Harrison Yang <harrison.yang@siliconmotion.com>
+---
+ ikvm_server.cpp | 27 +++++++++++++++++++++++++++
+ ikvm_video.cpp  |  2 +-
+ 2 files changed, 28 insertions(+), 1 deletion(-)
+
+diff --git a/ikvm_server.cpp b/ikvm_server.cpp
+index 9274a9b..d9331e5 100644
+--- a/ikvm_server.cpp
++++ b/ikvm_server.cpp
+@@ -34,6 +34,18 @@ Server::Server(const Args& args, Input& i, Video& v) :
+             xyz::openbmc_project::Common::InvalidArgument::ARGUMENT_VALUE(""));
+     }
+ 
++    switch (video.getPixelformat())
++    {
++        case V4L2_PIX_FMT_RGB24:
++            server->serverFormat.redShift = 16;
++            server->serverFormat.greenShift = 8;
++            server->serverFormat.blueShift = 0;
++            break;
++
++        default:
++            log<level::ERR>("Unsupported pixel format");
++    }
++
+     framebuffer.resize(
+         video.getHeight() * video.getWidth() * Video::bytesPerPixel, 0);
+ 
+@@ -160,6 +172,10 @@ void Server::sendFrame()
+         switch (video.getPixelformat())
+         {
+             case V4L2_PIX_FMT_RGB24:
++                cl->format.redShift = 8;
++                cl->format.greenShift = 8;
++                cl->format.blueShift = 8;
++                rfbSendUpdateBuf(cl);
+                 framebuffer.assign(data, data + video.getFrameSize());
+                 rfbMarkRectAsModified(server, 0, 0, video.getWidth(),
+                                       video.getHeight());
+@@ -247,6 +263,17 @@ void Server::doResize()
+     rfbNewFramebuffer(server, framebuffer.data(), video.getWidth(),
+                       video.getHeight(), Video::bitsPerSample,
+                       Video::samplesPerPixel, Video::bytesPerPixel);
++    switch (video.getPixelformat())
++    {
++        case V4L2_PIX_FMT_RGB24:
++            server->serverFormat.redShift = 16;
++            server->serverFormat.greenShift = 8;
++            server->serverFormat.blueShift = 0;
++            break;
++
++        default:
++            log<level::ERR>("Unsupported pixel format");
++    }
+     rfbMarkRectAsModified(server, 0, 0, video.getWidth(), video.getHeight());
+ 
+     it = rfbGetClientIterator(server);
+diff --git a/ikvm_video.cpp b/ikvm_video.cpp
+index 3445715..3ecf694 100644
+--- a/ikvm_video.cpp
++++ b/ikvm_video.cpp
+@@ -23,7 +23,7 @@ namespace ikvm
+ {
+ 
+ const int Video::bitsPerSample(8);
+-const int Video::bytesPerPixel(4);
++const int Video::bytesPerPixel(3);
+ const int Video::samplesPerPixel(3);
+ 
+ using namespace phosphor::logging;
