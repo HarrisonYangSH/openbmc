@@ -1,0 +1,29 @@
+{
+  "gpio_configs": {
+  "power_config": {
+      "power_good_in": "PGOOD",
+      "power_up_outs": [
+        {"name": "POWER_BUTTON", "polarity": true}
+      ],
+      "reset_outs": [
+      ]
+  }
+  },
+  "gpio_definitions": [
+  {
+      "name": "PGOOD",
+      "num": 24,
+      "direction": "in"
+  },
+  {
+      "name": "POWER_BUTTON",
+      "num": 23,
+      "direction": "both"
+  },
+  {
+      "name": "RESET_BUTTON",
+      "num": 27,
+      "direction": "both"
+  }
+  ]
+}
