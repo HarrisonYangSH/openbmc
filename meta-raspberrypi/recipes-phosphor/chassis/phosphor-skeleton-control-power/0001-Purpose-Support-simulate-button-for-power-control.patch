@@ -1,0 +1,83 @@
+From e0a1f59cbd3feb95a9f4d2ff011afc9c554aee55 Mon Sep 17 00:00:00 2001
+From: Harrison Yang <harrison.yang@siliconmotion.com>
+Date: Fri, 19 Sep 2025 14:58:49 +0800
+Subject: [PATCH] Purpose: Support simulate button for power control.
+
+Resolution:
+
+Upstream-Status: Submitted
+Reviewed-by: None
+---
+ op-pwrctl/Makefile            |  2 ++
+ op-pwrctl/meson.build         |  1 +
+ op-pwrctl/power_control_obj.c | 22 ++++++++++++++++++++++
+ 3 files changed, 25 insertions(+)
+
+diff --git a/op-pwrctl/Makefile b/op-pwrctl/Makefile
+index dd11965..a20cf26 100644
+--- a/op-pwrctl/Makefile
++++ b/op-pwrctl/Makefile
+@@ -2,3 +2,5 @@ BINS=power_control
+ SUBDIRS=pgood_wait
+ include ../gdbus.mk
+ include ../rules.mk
++
++CFLAGS += -DBUTTON_SIM
+diff --git a/op-pwrctl/meson.build b/op-pwrctl/meson.build
+index 2e52bc0..17ed247 100644
+--- a/op-pwrctl/meson.build
++++ b/op-pwrctl/meson.build
+@@ -1,6 +1,7 @@
+ executable(
+     'power_control.exe',
+     'power_control_obj.c',
++    c_args: '-DBUTTON_SIM',
+     include_directories: libopenbmc_intf_includes,
+     link_with: libopenbmc_intf,
+     dependencies: [gio_unix_dep, glib_dep],
+diff --git a/op-pwrctl/power_control_obj.c b/op-pwrctl/power_control_obj.c
+index c5ec5e5..2f941a7 100644
+--- a/op-pwrctl/power_control_obj.c
++++ b/op-pwrctl/power_control_obj.c
+@@ -280,7 +280,11 @@ on_set_power_state(ControlPower *pwr,
+ 			for (i = 0; i < power_gpio->num_power_up_outs; i++) {
+ 				GPIO *power_pin = &power_gpio->power_up_outs[i];
+ 				power_up_out = state ^ !power_gpio->power_up_pols[i];
++#ifdef BUTTON_SIM
++				error = gpio_open(power_pin, 0);
++#else
+ 				error = gpio_open(power_pin, power_up_out);
++#endif
+ 				if(error != GPIO_OK) {
+ 					gpio_close(power_pin);
+ 					g_print("ERROR PowerControl: GPIO open error (gpio=%s,rc=%d)\n",
+@@ -289,11 +293,29 @@ on_set_power_state(ControlPower *pwr,
+ 				}
+ 				g_print("PowerControl: setting power up %s to %d\n",
+ 						power_gpio->power_up_outs[i].name, (int)power_up_out);
++#ifdef BUTTON_SIM
++				error = gpio_write(power_pin, 1);
++#else
+ 				error = gpio_write(power_pin, power_up_out);
++#endif
+ 				if(error != GPIO_OK) {
+ 					gpio_close(power_pin);
+ 					continue;
+ 				}
++#ifdef BUTTON_SIM
++				if (state) {
++					/* When powering on, hold the power pin high for 500ms */
++					g_print("PowerControl: power on pulse for %s\n",
++							power_gpio->power_up_outs[i].name);
++					nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
++				} else {
++					/* When powering off, hold the power pin high for 3s */
++					g_print("PowerControl: power off pulse for %s\n",
++							power_gpio->power_up_outs[i].name);
++					nanosleep((const struct timespec[]){{5, 500000000L}}, NULL);
++				}
++				error = gpio_write(power_pin, 0);
++#endif
+ 				gpio_close(power_pin);
+ 			}
+ 			if(error != GPIO_OK) { break;	}
