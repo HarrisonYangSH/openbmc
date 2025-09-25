@@ -101,3 +101,22 @@ systemctl enable org.openbmc.control.Power@0.service
   ]
 }
 ```
+
+### 常见问题
+
+#### 执行关机后，网页状态刷新未能显示处于关机状态
+
+- 检查 PGOOD 状态和电源服务的状态
+
+  ```bash
+  busctl introspect org.openbmc.control.Power /org/openbmc/control/power0 org.openbmc.control.Power
+
+  obmcutil state
+  ```
+
+- 有时候需要执行`obmcutil poweroff`或者`obmcutil chassisoff`强制设置电源服务的状态于 Off
+
+#### 执行关机后，系统自动重新启动
+
+- 跟断电恢复的服务有关，暂时需要等后续开发，临时可通过`obmcutil recoveryoff`关闭断电恢复的服务
+
